@@ -191,7 +191,7 @@ class ConversationsRouter(BaseRouterV3):
                         "source": textwrap.dedent("""
                             from r2r import R2RClient
 
-                            client = R2RClient("http://localhost:7272")
+                            client = R2RClient("http://jovana.openbrain.io:7272")
                             # when using auth, do client.login(...)
 
                             response = client.conversations.export(
@@ -206,7 +206,7 @@ class ConversationsRouter(BaseRouterV3):
                         "source": textwrap.dedent("""
                             const { r2rClient } = require("r2r-js");
 
-                            const client = new r2rClient("http://localhost:7272");
+                            const client = new r2rClient("http://jovana.openbrain.io:7272");
 
                             function main() {
                                 await client.conversations.export({
@@ -283,7 +283,7 @@ class ConversationsRouter(BaseRouterV3):
                         "source": textwrap.dedent("""
                             from r2r import R2RClient
 
-                            client = R2RClient("http://localhost:7272")
+                            client = R2RClient("http://jovana.openbrain.io:7272")
                             # when using auth, do client.login(...)
 
                             response = client.conversations.export_messages(
@@ -298,7 +298,7 @@ class ConversationsRouter(BaseRouterV3):
                         "source": textwrap.dedent("""
                             const { r2rClient } = require("r2r-js");
 
-                            const client = new r2rClient("http://localhost:7272");
+                            const client = new r2rClient("http://jovana.openbrain.io:7272");
 
                             function main() {
                                 await client.conversations.exportMessages({

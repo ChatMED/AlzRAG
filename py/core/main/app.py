@@ -99,7 +99,7 @@ class R2RApp:
             )
 
     def _apply_cors(self):
-        origins = ["*", "http://localhost:3000", "http://localhost:7272"]
+        origins = ["*", "http://jovana.openbrain.io:3000", "http://jovana.openbrain.io:7272"]
         self.app.add_middleware(
             CORSMiddleware,
             allow_origins=origins,

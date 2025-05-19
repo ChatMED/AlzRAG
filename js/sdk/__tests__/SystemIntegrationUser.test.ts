@@ -1,7 +1,7 @@
 import { r2rClient } from "../src/index";
 import { describe, test, beforeAll, expect } from "@jest/globals";
 
-const baseUrl = "http://localhost:7272";
+const baseUrl = "http://jovana.openbrain.io:7272";
 
 describe("r2rClient V3 System Integration Tests User", () => {
   let client: r2rClient;

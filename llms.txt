@@ -469,7 +469,7 @@ The Full R2R installation uses a custom configuration (`full.toml`). Launch R2R 
 r2r serve --docker --config-path=full.toml
 ```
 
-> This command pulls necessary Docker images and starts required containers, including R2R, Hatchet, and Postgres+pgvector. Access the live server at [http://localhost:7272](http://localhost:7272/).
+> This command pulls necessary Docker images and starts required containers, including R2R, Hatchet, and Postgres+pgvector. Access the live server at [http://jovana.openbrain.io:7272](http://jovana.openbrain.io:7272/).
 
 ### Google Cloud Platform Deployment
 
@@ -618,7 +618,7 @@ R2R's application lifecycle encompasses customization, configuration, deployment
 ```python
 from r2r import R2RClient
 
-client = R2RClient("http://localhost:7272")
+client = R2RClient("http://jovana.openbrain.io:7272")
 
 # Create a test document
 with open("test.txt", "w") as file:
@@ -1086,7 +1086,7 @@ r2r documents list
 }
 ```
 
-An `ingestion_status` of `"success"` confirms the document is fully ingested. Also, check the R2R dashboard at [http://localhost:7273](http://localhost:7273/) for ingestion progress and status.
+An `ingestion_status` of `"success"` confirms the document is fully ingested. Also, check the R2R dashboard at [http://jovana.openbrain.io:7273](http://jovana.openbrain.io:7273/) for ingestion progress and status.
 
 For more details on creating documents, refer to the [Create Document API](https://r2r-docs.sciphi.ai/api-and-sdks/documents/create-document).
 
@@ -1117,7 +1117,7 @@ To remove documents or chunks, use their respective `delete` methods.
 **Delete a Document:**
 
 ```bash
-curl -X DELETE http://localhost:7272/v3/documents/9fbe403b-c11c-5aae-8ade-ef22980c3ad1 \
+curl -X DELETE http://jovana.openbrain.io:7272/v3/documents/9fbe403b-c11c-5aae-8ade-ef22980c3ad1 \
   -H "Content-Type: application/json"
 ```
 
@@ -1273,7 +1273,7 @@ r2r documents create --file_path path/to/lyft_2021.pdf
 Access enriched chunks through the API:
 
 ```bash
-curl -X GET http://localhost:7272/v3/document/{document_id}/chunks
+curl -X GET http://jovana.openbrain.io:7272/v3/document/{document_id}/chunks
 ```
 
 **Before Enrichment:**
@@ -1367,7 +1367,7 @@ Vector search leverages semantic embeddings to find documents that are contextua
 **Example:**
 
 ```bash
-curl -X POST http://localhost:7272/v3/retrieval/search \
+curl -X POST http://jovana.openbrain.io:7272/v3/retrieval/search \
   -H "Content-Type: application/json" \
   -d '{
     "query": "What was Uber'\''s profit in 2020?",
@@ -1394,7 +1394,7 @@ Hybrid search combines keyword-based full-text search with semantic vector searc
 **Example:**
 
 ```bash
-curl -X POST http://localhost:7272/v3/retrieval/search \
+curl -X POST http://jovana.openbrain.io:7272/v3/retrieval/search \
   -H "Content-Type: application/json" \
   -d '{
     "query": "What was Uber'\''s profit in 2020?",
@@ -1428,7 +1428,7 @@ Knowledge graph search enhances retrieval by leveraging relationships and entiti
 **Example:**
 
 ```bash
-curl -X POST http://localhost:7272/v3/retrieval/search \
+curl -X POST http://jovana.openbrain.io:7272/v3/retrieval/search \
   -H "Content-Type: application/json" \
   -d '{
     "query": "Who was Aristotle?",
@@ -1488,7 +1488,7 @@ R2R couples its powerful retrieval capabilities with large language models (LLMs
 **Example:**
 
 ```bash
-curl -X POST http://localhost:7272/v3/retrieval/rag \
+curl -X POST http://jovana.openbrain.io:7272/v3/retrieval/rag \
   -H "Content-Type: application/json" \
   -d '{
     "query": "What was Uber'\''s profit in 2020?"
@@ -1512,7 +1512,7 @@ Combine hybrid search logic with RAG for enhanced results.
 **Example:**
 
 ```bash
-curl -X POST http://localhost:7272/v3/retrieval/rag \
+curl -X POST http://jovana.openbrain.io:7272/v3/retrieval/rag \
   -H "Content-Type: application/json" \
   -d '{
     "query": "Who is Jon Snow?",
@@ -1542,7 +1542,7 @@ You can control various aspects of RAG, including search settings, generation co
 **Example:**
 
 ```bash
-curl -X POST http://localhost:7272/v3/retrieval/rag \
+curl -X POST http://jovana.openbrain.io:7272/v3/retrieval/rag \
   -H "Content-Type: application/json" \
   -d '{
     "query": "Who is Jon Snow?",
@@ -1743,7 +1743,7 @@ Extract entities and relationships from documents.
 ```python
 from r2r import R2RClient
 
-client = R2RClient("http://localhost:7272")
+client = R2RClient("http://jovana.openbrain.io:7272")
 
 # Extract entities and relationships
 document_id = "your-document-id"
@@ -1824,25 +1824,25 @@ relationships = client.graphs.list_relationships(collection_id)
 
 1. **Extract Document Knowledge**:
    ```bash
-   curl -X POST http://localhost:7272/v3/documents/${document_id}/extract
+   curl -X POST http://jovana.openbrain.io:7272/v3/documents/${document_id}/extract
    ```
 2. **Initialize and Populate Graph**:
    ```bash
-   curl -X POST http://localhost:7272/v3/graphs/${collection_id}/pull
+   curl -X POST http://jovana.openbrain.io:7272/v3/graphs/${collection_id}/pull
    ```
 3. **View Entities and Relationships**:
    ```bash
-   curl -X GET http://localhost:7272/v3/graphs/${collection_id}/entities
-   curl -X GET http://localhost:7272/v3/graphs/${collection_id}/relationships
+   curl -X GET http://jovana.openbrain.io:7272/v3/graphs/${collection_id}/entities
+   curl -X GET http://jovana.openbrain.io:7272/v3/graphs/${collection_id}/relationships
    ```
 4. **Build Graph Communities**:
    ```bash
-   curl -X POST http://localhost:7272/v3/graphs/${collection_id}/communities/build
-   curl -X GET http://localhost:7272/v3/graphs/${collection_id}/communities
+   curl -X POST http://jovana.openbrain.io:7272/v3/graphs/${collection_id}/communities/build
+   curl -X GET http://jovana.openbrain.io:7272/v3/graphs/${collection_id}/communities
    ```
 5. **KG-Enhanced Search**:
    ```bash
-   curl -X POST http://localhost:7272/v3/retrieval/search \
+   curl -X POST http://jovana.openbrain.io:7272/v3/retrieval/search \
     -H "Content-Type: application/json" \
     -d '{
       "query": "who was aristotle?",
@@ -1854,7 +1854,7 @@ relationships = client.graphs.list_relationships(collection_id)
    ```
 6. **Reset Graph**:
    ```bash
-   curl -X POST http://localhost:7272/v3/graphs/${collection_id}/reset
+   curl -X POST http://jovana.openbrain.io:7272/v3/graphs/${collection_id}/reset
    ```
 
 ### Graph Synchronization
@@ -1914,7 +1914,7 @@ Graphs automatically enhance search for collection members.
 **Curl Example:**
 
 ```bash
-curl -X POST http://localhost:7272/v3/retrieval/search \
+curl -X POST http://jovana.openbrain.io:7272/v3/retrieval/search \
   -H "Content-Type: application/json" \
   -d '{
     "query": "What is deep learning?",
@@ -2063,7 +2063,7 @@ Ensure you have:
 ```python
 from r2r import R2RClient
 
-client = R2RClient("http://localhost:7272")
+client = R2RClient("http://jovana.openbrain.io:7272")
 
 # Setup collection and extract knowledge
 collection_id = "your-collection-id"
@@ -2177,7 +2177,7 @@ For large collections, utilize R2R’s orchestration capabilities via Hatchet UI
 
 **Access Hatchet UI:**
 
-- **URL**: [http://localhost:7274](http://localhost:7274)
+- **URL**: [http://jovana.openbrain.io:7274](http://jovana.openbrain.io:7274)
 - **Login Credentials**:
   - **Email**: admin@example.com
   - **Password**: Admin123!!
@@ -2287,7 +2287,7 @@ Access the agent through the R2R API via the `agent` endpoint.
 from r2r import R2RClient
 
 # Initialize the client
-client = R2RClient("http://localhost:7272")
+client = R2RClient("http://jovana.openbrain.io:7272")
 
 # Make a simple query
 first_reply = client.retrieval.agent(
@@ -2489,7 +2489,7 @@ Orchestration in R2R is managed using [Hatchet](https://docs.hatchet.run/home), 
 
 ### Orchestration GUI
 
-Access the Hatchet front-end application at [http://localhost:7274](http://localhost:7274).
+Access the Hatchet front-end application at [http://jovana.openbrain.io:7274](http://jovana.openbrain.io:7274).
 
 #### Login
 
@@ -2888,7 +2888,7 @@ R2R offers configurable vector search and RAG capabilities with direct method ca
 ```javascript
 const { r2rClient } = require("r2r-js");
 
-const client = new r2rClient("http://localhost:7272");
+const client = new r2rClient("http://jovana.openbrain.io:7272");
 
 async function main() {
     const files = [
@@ -2952,8 +2952,8 @@ First, create the R2R client and specify the base URL where the R2R server is ru
 ```javascript
 const { r2rClient } = require("r2r-js");
 
-// http://localhost:7272 or your R2R server address
-const client = new r2rClient("http://localhost:7272");
+// http://jovana.openbrain.io:7272 or your R2R server address
+const client = new r2rClient("http://jovana.openbrain.io:7272");
 ```
 
 #### Log into the Server
@@ -3093,7 +3093,7 @@ Ensure your R2R server is running, then start the frontend:
 pnpm dev
 ```
 
-Access the dashboard at [http://localhost:3000](http://localhost:3000).
+Access the dashboard at [http://jovana.openbrain.io:3000](http://jovana.openbrain.io:3000).
 
 ### Best Practices
 
@@ -3130,7 +3130,7 @@ For detailed configuration, refer to the [Authentication Configuration Documenta
 ```python
 from r2r import R2RClient
 
-client = R2RClient("http://localhost:7272")  # Replace with your R2R deployment URL
+client = R2RClient("http://jovana.openbrain.io:7272")  # Replace with your R2R deployment URL
 
 # Register a new user
 user_result = client.users.create("user1@test.com", "password123")
@@ -3171,7 +3171,7 @@ Authenticated searches are filtered based on the user's permissions.
 **Curl Example:**
 
 ```bash
-curl -X POST http://localhost:7272/v3/retrieval/search \
+curl -X POST http://jovana.openbrain.io:7272/v3/retrieval/search \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -3199,7 +3199,7 @@ Invalidate the current access token.
 **Curl Example:**
 
 ```bash
-curl -X POST http://localhost:7272/v3/users/logout \
+curl -X POST http://jovana.openbrain.io:7272/v3/users/logout \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
@@ -3314,7 +3314,7 @@ Authenticate as the default admin or another superuser to access superuser featu
 ```python
 from r2r import R2RClient
 
-client = R2RClient("http://localhost:7272")
+client = R2RClient("http://jovana.openbrain.io:7272")
 
 # Login as admin
 login_result = client.users.login("admin@example.com", "change_me_immediately")
@@ -3404,7 +3404,7 @@ R2R provides robust document collection management, allowing developers to imple
 ```python
 from r2r import R2RClient
 
-client = R2RClient("http://localhost:7272")  # Replace with your R2R deployment URL
+client = R2RClient("http://jovana.openbrain.io:7272")  # Replace with your R2R deployment URL
 
 # Create a new collection
 collection_result = client.collections.create("Marketing Team", "Collection for marketing department")
@@ -3978,7 +3978,7 @@ R2R supports multi-turn conversations and complex query processing through its a
 ```python
 from r2r import R2RClient
 
-client = R2RClient("http://localhost:7272")
+client = R2RClient("http://jovana.openbrain.io:7272")
 
 messages = [
     {"role": "system", "content": "You are a helpful AI assistant."},

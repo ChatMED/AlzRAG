@@ -23,7 +23,7 @@ from r2r import R2RClient
 2. Initialize the client:
 
 ```python
-client = R2RClient("http://localhost:7272")
+client = R2RClient("http://jovana.openbrain.io:7272")
 ```
 
 

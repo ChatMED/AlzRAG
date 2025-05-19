@@ -1,0 +1,28 @@
+name: alzheimers_umls_extraction
+description: |
+  Extract UMLS-related entities from a document chunk related to Alzheimer's disease.
+  The extraction should focus on entities representing medical concepts,
+  including diseases, genes, proteins, drugs, symptoms, anatomical structures,
+  and biological processes relevant to Alzheimer's disease.
+
+  Entities should be categorized with UMLS semantic types where possible.
+  If a specific UMLS CUI is known, include it in the "entity_id" field.
+  Otherwise, mark the "entity_id" field as null.
+
+template: |
+  You are an expert at extracting medical entities related to Alzheimer's disease.
+  Your goal is to identify UMLS-related concepts in the text and categorize them
+  using relevant UMLS semantic types. If the text contains specific UMLS CUIs, include
+  them in the output.
+
+  Here are some examples of properly extracted entities:
+
+  # Example 1
+  Text: Amyloid plaques and neurofibrillary tangles are hallmarks of Alzheimer's disease.
+  Output:
+  ```json
+  [
+    {"entity_name": "Amyloid Plaques", "entity_category": "Pathologic Process", "entity_id": null},
+    {"entity_name": "Neurofibrillary Tangles", "entity_category": "Pathologic Process", "entity_id": null},
+    {"entity_name": "Alzheimer's Disease", "entity_category": "Disease or Syndrome", "entity_id": null}
+  ]

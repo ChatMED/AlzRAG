@@ -1,7 +1,7 @@
 import { r2rClient } from "../src/index";
 import { describe, test, beforeAll, expect } from "@jest/globals";
 
-const baseUrl = "http://localhost:7272";
+const baseUrl = "http://jovana.openbrain.io:7272";
 
 /**
  * User 1's document will have an id of `70b39c87-a9a6-50ae-9bd0-b9460325ad81`

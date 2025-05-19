@@ -9,7 +9,7 @@ from r2r import R2RClient, R2RException
 def config():
 
     class TestConfig:
-        base_url = "http://localhost:7272"
+        base_url = "http://jovana.openbrain.io:7272"
         superuser_email = "admin@example.com"
         superuser_password = "change_me_immediately"
         known_collection_id = "122fdf6a-e116-546b-a8f6-e4cb2e2c0a09"  # Example known collection ID

@@ -70,33 +70,33 @@ class OpenAICompletionProvider(CompletionProvider):
             logger.debug("Deepseek OpenAI clients initialized successfully")
 
         # Initialize Ollama clients with default API key
-        if os.getenv("OLLAMA_API_BASE", "http://localhost:11434/v1"):
+        if os.getenv("OLLAMA_API_BASE", "http://jovana.openbrain.io:11434/v1"):
             self.ollama_client = OpenAI(
                 api_key=os.getenv("OLLAMA_API_KEY", "dummy"),
                 base_url=os.getenv(
-                    "OLLAMA_API_BASE", "http://localhost:11434/v1"
+                    "OLLAMA_API_BASE", "http://jovana.openbrain.io:11434/v1"
                 ),
             )
             self.async_ollama_client = AsyncOpenAI(
                 api_key=os.getenv("OLLAMA_API_KEY", "dummy"),
                 base_url=os.getenv(
-                    "OLLAMA_API_BASE", "http://localhost:11434/v1"
+                    "OLLAMA_API_BASE", "http://jovana.openbrain.io:11434/v1"
                 ),
             )
             logger.debug("Ollama OpenAI clients initialized successfully")
 
         # Initialize LMStudio clients
-        if os.getenv("LMSTUDIO_API_BASE", "http://localhost:1234/v1"):
+        if os.getenv("LMSTUDIO_API_BASE", "http://jovana.openbrain.io:1234/v1"):
             self.lmstudio_client = OpenAI(
                 api_key=os.getenv("LMSTUDIO_API_KEY", "lm-studio"),
                 base_url=os.getenv(
-                    "LMSTUDIO_API_BASE", "http://localhost:1234/v1"
+                    "LMSTUDIO_API_BASE", "http://jovana.openbrain.io:1234/v1"
                 ),
             )
             self.async_lmstudio_client = AsyncOpenAI(
                 api_key=os.getenv("LMSTUDIO_API_KEY", "lm-studio"),
                 base_url=os.getenv(
-                    "LMSTUDIO_API_BASE", "http://localhost:1234/v1"
+                    "LMSTUDIO_API_BASE", "http://jovana.openbrain.io:1234/v1"
                 ),
             )
             logger.debug("LMStudio OpenAI clients initialized successfully")

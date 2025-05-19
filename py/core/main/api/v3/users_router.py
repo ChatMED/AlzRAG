@@ -45,7 +45,7 @@ class UsersRouter(BaseRouterV3):
         super().__init__(providers, services, config)
         self.google_client_id = os.environ.get("GOOGLE_CLIENT_ID")
         self.google_client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
-        self.google_redirect_uri = os.environ.get("GOOGLE_REDIRECT_URI")
+        self.http://jovana.openbrain.io = os.environ.get("http://jovana.openbrain.io")
 
         self.github_client_id = os.environ.get("GITHUB_CLIENT_ID")
         self.github_client_secret = os.environ.get("GITHUB_CLIENT_SECRET")
@@ -157,7 +157,7 @@ class UsersRouter(BaseRouterV3):
                         "source": textwrap.dedent("""
                             from r2r import R2RClient
 
-                            client = R2RClient("http://localhost:7272")
+                            client = R2RClient("http://jovana.openbrain.io:7272")
                             # when using auth, do client.login(...)
 
                             response = client.users.export(
@@ -172,7 +172,7 @@ class UsersRouter(BaseRouterV3):
                         "source": textwrap.dedent("""
                             const { r2rClient } = require("r2r-js");
 
-                            const client = new r2rClient("http://localhost:7272");
+                            const client = new r2rClient("http://jovana.openbrain.io:7272");
 
                             function main() {
                                 await client.users.export({
@@ -1600,7 +1600,7 @@ class UsersRouter(BaseRouterV3):
             # Build the Google OAuth URL
             params = {
                 "client_id": self.google_client_id,
-                "redirect_uri": self.google_redirect_uri,
+                "redirect_uri": self.http://jovana.openbrain.io,
                 "response_type": "code",
                 "scope": scope,
                 "state": state,

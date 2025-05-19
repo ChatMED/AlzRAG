@@ -23,7 +23,7 @@ const { r2rClient } = require('r2r-js');
 2. Initialize the client:
 
 ```javascript
-const client = new r2rClient('http://localhost:7272');
+const client = new r2rClient('http://jovana.openbrain.io:7272');
 ```
 
 3. Check if R2R is running correctly:

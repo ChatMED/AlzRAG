@@ -54,7 +54,7 @@ async def async_generate_all_summaries():
     base_url = os.getenv("R2R_BASE_URL")
     if not base_url:
         raise ValueError(
-            "Environment variable `R2R_BASE_URL` must be provided, it must point at the R2R deployment you wish to migrate, e.g. `http://localhost:7272`."
+            "Environment variable `R2R_BASE_URL` must be provided, it must point at the R2R deployment you wish to migrate, e.g. `http://jovana.openbrain.io:7272`."
         )
 
     print(f"Using R2R Base URL: {base_url})")

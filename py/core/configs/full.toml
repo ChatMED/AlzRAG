@@ -23,3 +23,7 @@ provider = "hatchet"
 kg_creation_concurrency_limit = 32
 ingestion_concurrency_limit = 16
 kg_concurrency_limit = 8
+
+[collections.defaults]
+entity_extraction_prompt = "alzheimers_umls_extraction"
+entity_deduplication_prompt = "graph_entity_description"

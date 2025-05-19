@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 const TEST_OUTPUT_DIR = path.join(__dirname, "test-output");
 
-const baseUrl = "http://localhost:7272";
+const baseUrl = "http://jovana.openbrain.io:7272";
 
 /**
  * zametov.txt will have an id of 69100f1e-2839-5b37-916d-5c87afe14094

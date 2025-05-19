@@ -34,7 +34,7 @@ jobs:
         run: pnpm install
       - name: Check if R2R server is running
         run: |
-          curl http://localhost:7272/v2/health || echo "Server not responding"
+          curl http://jovana.openbrain.io:7272/v2/health || echo "Server not responding"
 
   v3-integration-tests:
     needs: setup

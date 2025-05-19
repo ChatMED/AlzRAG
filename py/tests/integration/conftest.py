@@ -9,7 +9,7 @@ from r2r import R2RAsyncClient, R2RClient
 class TestConfig:
 
     def __init__(self):
-        self.base_url = "http://localhost:7272"
+        self.base_url = "http://jovana.openbrain.io:7272"
         self.index_wait_time = 1.0
         self.chunk_creation_wait_time = 1.0
         self.superuser_email = "admin@example.com"
@@ -65,7 +65,7 @@ from r2r import R2RClient, R2RException
 def config():
 
     class TestConfig:
-        base_url = "http://localhost:7272"
+        base_url = "http://jovana.openbrain.io:7272"
         superuser_email = "admin@example.com"
         superuser_password = "change_me_immediately"
 

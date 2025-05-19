@@ -3,7 +3,7 @@ import { describe, test, beforeAll, expect, afterAll } from "@jest/globals";
 import fs from "fs";
 import path from "path";
 
-const baseUrl = "http://localhost:7272";
+const baseUrl = "http://jovana.openbrain.io:7272";
 const TEST_OUTPUT_DIR = path.join(__dirname, "test-output");
 
 describe("r2rClient V3 Users Integration Tests", () => {

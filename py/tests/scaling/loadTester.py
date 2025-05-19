@@ -241,7 +241,7 @@ class LoadTester:
 
 
 def main():
-    load_tester = LoadTester("http://localhost:7280")
+    load_tester = LoadTester("http://jovana.openbrain.io:7280")
     asyncio.run(load_tester.run_load_test())
 
 

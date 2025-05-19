@@ -1,0 +1,181 @@
+# medical_rag.toml - Medical record formatted responses while maintaining core R2R settings
+
+[app]
+# Preserve existing app settings
+default_max_documents_per_user = 10_000
+default_max_chunks_per_user = 10_000_000
+default_max_collections_per_user = 5_000
+default_max_upload_size = 214748364800
+fast_llm = "openai/gpt-4o-mini"
+quality_llm = "openai/gpt-4o"
+vlm = "openai/gpt-4o"
+audio_lm = "openai/whisper-1"
+
+[agent]
+# Change to medical record agent prompt
+agent_static_prompt = "medical_record_agent"
+agent_dynamic_prompt = "medical_record_dynamic_agent"
+tools = ["local_search", "content"]
+
+[auth]
+# Preserve existing auth settings
+provider = "r2r"
+access_token_lifetime_in_minutes = 60000
+refresh_token_lifetime_in_days = 7
+require_authentication = false
+require_email_verification = false
+default_admin_email = "admin@example.com"
+default_admin_password = "change_me_immediately"
+
+[completion]
+provider = "r2r"
+concurrent_request_limit = 64
+
+  [completion.generation_config]
+  # Adjust settings for medical responses
+  model = "openai/gpt-4o"  # Use the most capable model for medical accuracy
+  temperature = 0.1
+  top_p = 1
+  max_tokens_to_sample = 4_096
+  stream = false
+  add_generation_kwargs = { }
+
+[crypto]
+provider = "bcrypt"
+
+[database]
+default_collection_name = "Default"
+default_collection_description = "Your default collection."
+collection_summary_prompt = "collection_summary"
+
+  [database.graph_creation_settings]
+    graph_entity_description_prompt = "graph_entity_description"
+    graph_extraction_prompt = "graph_extraction"
+    entity_types = [] # if empty, all entities are extracted
+    relation_types = [] # if empty, all relations are extracted
+    automatic_deduplication = true # enable automatic deduplication of entities
+
+  [database.graph_enrichment_settings]
+    graph_communities_prompt = "graph_communities"
+
+[embedding]
+provider = "litellm"
+base_model = "openai/text-embedding-3-small"
+base_dimension = 512
+batch_size = 128
+add_title_as_prefix = false
+concurrent_request_limit = 256
+quantization_settings = { quantization_type = "FP32" }
+
+[completion_embedding]
+provider = "litellm"
+base_model = "openai/text-embedding-3-small"
+base_dimension = 512
+batch_size = 128
+add_title_as_prefix = false
+concurrent_request_limit = 256
+
+[ingestion]
+provider = "r2r"
+chunking_strategy = "recursive"
+chunk_size = 1_024
+chunk_overlap = 512
+excluded_parsers = ["mp4"]
+automatic_extraction = true # enable automatic extraction of entities and relations
+
+  [ingestion.chunk_enrichment_settings]
+    chunk_enrichment_prompt = "chunk_enrichment"
+    enable_chunk_enrichment = false # disabled by default
+    n_chunks = 2 # the number of chunks (both preceding and succeeding) to use in enrichment
+
+  [ingestion.extra_parsers]
+    pdf = "zerox"
+
+[logging]
+provider = "r2r"
+log_table = "logs"
+log_info_table = "log_info"
+
+[orchestration]
+provider = "simple"
+
+[email]
+provider = "console_mock" # `smtp` | `sendgrid` supported
+
+# Add the RAG prompt configurations
+[prompts.medical_record_agent]
+template = """
+You are a specialized medical assistant that generates formal medical reports based on patient queries.
+
+Your responses must always follow a structured medical format appropriate to the query type:
+
+For GENETIC VARIANT questions, use this format:
+1. GENETIC VARIANT ASSESSMENT
+   - Gene name, transcript, nucleotide change, amino acid change
+   - Genomic coordinates and database IDs when available
+   - Zygosity and population frequency
+
+2. GENE FUNCTION & DISEASE ASSOCIATION
+   - Normal function of the gene product
+   - Associated diseases and inheritance patterns
+   - OMIM numbers and phenotypic spectrum
+
+3. VARIANT INTERPRETATION
+   - Classification with ACMG criteria
+   - Evidence from literature and databases
+   - Include relevant PubMed IDs [PMID: XXXXXXXX]
+
+4. CLINICAL CORRELATION
+   - Connection to patient's phenotype
+   - Penetrance and expressivity considerations
+   - Genotype-phenotype correlations
+
+5. RECOMMENDATIONS
+   - Follow-up testing recommendations
+   - Clinical monitoring suggestions
+   - Family screening considerations
+
+For GENERAL MEDICAL questions, use this format:
+1. PATIENT INFORMATION
+2. CHIEF COMPLAINT
+3. HISTORY OF PRESENT ILLNESS
+4. PAST MEDICAL HISTORY
+5. MEDICATIONS
+6. ALLERGIES
+7. PHYSICAL EXAMINATION
+8. ASSESSMENT
+9. PLAN
+
+Current date: {date}
+
+Always cite sources with numbered references [1], [2], etc.
+Use proper medical terminology and maintain a professional tone.
+"""
+
+[prompts.medical_record_dynamic_agent]
+template = """
+You are a specialized medical assistant that generates formal medical reports.
+
+For GENETIC VARIANT questions, use this format:
+1. GENETIC VARIANT ASSESSMENT
+2. GENE FUNCTION & DISEASE ASSOCIATION
+3. VARIANT INTERPRETATION
+4. CLINICAL CORRELATION
+5. RECOMMENDATIONS
+
+For GENERAL MEDICAL questions, use this format:
+1. PATIENT INFORMATION
+2. CHIEF COMPLAINT
+3. HISTORY OF PRESENT ILLNESS
+4. PAST MEDICAL HISTORY
+5. MEDICATIONS
+6. ALLERGIES
+7. PHYSICAL EXAMINATION
+8. ASSESSMENT
+9. PLAN
+
+Adapt the format to the query type. Always use professional medical terminology and cite sources with numbered references.
+"""
+
+[rag]
+default_rag_prompt = "medical_record_rag"
