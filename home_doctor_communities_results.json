@@ -1,0 +1,268 @@
+{
+  "export_timestamp": "2025-05-29T09:57:25.174889",
+  "collection_id": "b46a1fd1-076c-4e90-bf24-c228fb89f934",
+  "created_communities": [
+    {
+      "id": "5f82773c-7d24-40be-b45c-78eb7a628e71",
+      "name": "Symptom Assessment and Triage",
+      "rating": 9.5
+    },
+    {
+      "id": "243acca0-6f91-492e-ac37-3a9346132b14",
+      "name": "Emergency Recognition and Response",
+      "rating": 10.0
+    },
+    {
+      "id": "12c69b14-3137-4ab3-947f-654187b1f9ab",
+      "name": "Common Illness Home Treatment",
+      "rating": 8.5
+    },
+    {
+      "id": "96247912-6401-417f-b683-2a6c18ff09bb",
+      "name": "Medication Safety and Guidance",
+      "rating": 9.0
+    },
+    {
+      "id": "2ee29d6d-899a-450b-8f5c-b47ae85cdc31",
+      "name": "Chronic Disease Self-Management",
+      "rating": 8.8
+    },
+    {
+      "id": "a221f7cf-0073-4a76-b65f-2138d2c9e76c",
+      "name": "Mental Health and Wellness Support",
+      "rating": 8.0
+    }
+  ],
+  "total_communities_count": 38,
+  "community_build_success": true,
+  "all_communities": [
+    {
+      "id": "a60c20b4-fae8-4079-a645-2276326f47d9",
+      "name": "Obsesivno Kompulzivna Motnja Community",
+      "summary": "The Obsesivno Kompulzivna Motnja Community focuses on understanding and addressing the challenges as...",
+      "rating": 7.5
+    },
+    {
+      "id": "24086689-fed2-4b62-9325-697d430e1c33",
+      "name": "ACICLOVIR-ZOVIRAX Community",
+      "summary": "The ACICLOVIR-ZOVIRAX Community focuses on the development and application of antiviral medications ...",
+      "rating": 7.0
+    },
+    {
+      "id": "e3a2a122-e7ef-4706-b1cc-e5843fb3c394",
+      "name": "Women Aged 30 and Autoimmune Disease Community",
+      "summary": "The Women Aged 30 and Autoimmune Disease Community focuses on the health risks faced by women in thi...",
+      "rating": 7.5
+    },
+    {
+      "id": "1a979d37-27a2-45e0-a0f1-a06425ce9c51",
+      "name": "Sexually Transmitted Infections Community",
+      "summary": "The Sexually Transmitted Infections Community focuses on the awareness, prevention, and treatment of...",
+      "rating": 7.5
+    },
+    {
+      "id": "39037b07-ecbe-4c53-8105-981688285f50",
+      "name": "Epilessia Community",
+      "summary": "The Epilessia Community encompasses various types of epilepsy, focusing on the classification and ch...",
+      "rating": 7.5
+    },
+    {
+      "id": "7a56ea03-ea03-4f1f-950b-ba3c49430c05",
+      "name": "AIDOC Community",
+      "summary": "The AIDOC Community focuses on providing support and resources for individuals affected by Obsessive...",
+      "rating": 7.5
+    },
+    {
+      "id": "07630ec2-62c6-4f80-843e-a4b682df4a80",
+      "name": "Rheumatoid Arthritis Support Community",
+      "summary": "The Rheumatoid Arthritis Support Community is a network of organizations and resources dedicated to ...",
+      "rating": 9.0
+    },
+    {
+      "id": "a5db293f-5a30-47bf-9693-483f2d4e1894",
+      "name": "Oncology and Cancer Research Community",
+      "summary": "The Oncology and Cancer Research Community encompasses various cancer types, their risk factors, and...",
+      "rating": 9.0
+    },
+    {
+      "id": "fb4f6488-297e-471c-b3c1-ddf30974129d",
+      "name": "Alzheimer's Disease and Dementia Support Community",
+      "summary": "The Alzheimer's Disease and Dementia Support Community encompasses various organizations, healthcare...",
+      "rating": 9.0
+    },
+    {
+      "id": "f27fa639-9e0b-4efa-a79f-b63b9ba1d223",
+      "name": "Benign Prostatic Hyperplasia Awareness Community",
+      "summary": "The Benign Prostatic Hyperplasia Awareness Community focuses on educating and supporting men, partic...",
+      "rating": 9.0
+    },
+    {
+      "id": "e54b3180-826b-4107-a46e-b1cd82f7c24d",
+      "name": "Obsessive-Compulsive Disorder Awareness Community",
+      "summary": "The Obsessive-Compulsive Disorder Awareness Community is a network of organizations, resources, and ...",
+      "rating": 9.0
+    },
+    {
+      "id": "c33df6f1-c1db-413e-a89d-e4938027584f",
+      "name": "Parkinson's Disease Support Community",
+      "summary": "The Parkinson's Disease Support Community encompasses various organizations and associations dedicat...",
+      "rating": 9.0
+    },
+    {
+      "id": "81a637dd-74ee-4b5e-a264-31c4a82d7e3f",
+      "name": "Lyme Disease and Addiction Support Community",
+      "summary": "The Lyme Disease and Addiction Support Community encompasses various entities focused on addressing ...",
+      "rating": 8.0
+    },
+    {
+      "id": "2a24a737-622e-4370-bf0e-fcbeaa1d6211",
+      "name": "Epilepsy and Neurological Disorders Community",
+      "summary": "The Epilepsy and Neurological Disorders Community encompasses various organizations, experts, and re...",
+      "rating": 9.0
+    },
+    {
+      "id": "90d7d829-0d8e-4857-8d99-8062fbae3140",
+      "name": "Morbillo Awareness Community",
+      "summary": "The Morbillo Awareness Community focuses on the prevention, symptoms, and impact of measles, particu...",
+      "rating": 7.5
+    },
+    {
+      "id": "05e31d72-fc0a-4811-9192-6f76a994bbb7",
+      "name": "Infectious Diseases Community",
+      "summary": "The Infectious Diseases Community encompasses various infectious diseases affecting primarily childr...",
+      "rating": 8.0
+    },
+    {
+      "id": "022a284b-3345-49dc-aa55-a705fb117c4e",
+      "name": "Urological Health Community",
+      "summary": "The Urological Health Community encompasses various conditions and organizations focused on urologic...",
+      "rating": 8.0
+    },
+    {
+      "id": "6b93f666-dd11-44c7-b3d8-4c56d10451b0",
+      "name": "Colorectal Cancer Awareness and Support Community",
+      "summary": "The Colorectal Cancer Awareness and Support Community is a network of organizations, healthcare prov...",
+      "rating": 9.0
+    },
+    {
+      "id": "c3cc3190-b86c-4ccf-8246-8b19087fbe73",
+      "name": "Diabetes and Infectious Diseases Community",
+      "summary": "The Diabetes and Infectious Diseases Community encompasses various health conditions, including diab...",
+      "rating": 8.0
+    },
+    {
+      "id": "979149fc-628a-40d7-b2e6-2331e046a64c",
+      "name": "Friuli Health Services Community",
+      "summary": "The Friuli Health Services Community encompasses various healthcare organizations in the Friuli regi...",
+      "rating": 9.0
+    },
+    {
+      "id": "a1431c22-3726-4a70-98d2-a07d81c0b606",
+      "name": "Glioma Research Community",
+      "summary": "The Glioma Research Community encompasses medical professionals, research institutions, and educatio...",
+      "rating": 9.0
+    },
+    {
+      "id": "9678ef12-3e6e-4f7a-a248-397295edb6ca",
+      "name": "Knee Pain and Related Conditions Community",
+      "summary": "The Knee Pain and Related Conditions Community encompasses various medical conditions and factors co...",
+      "rating": 9.0
+    },
+    {
+      "id": "4d0c877b-be99-47ae-aa18-4d7b3466c55a",
+      "name": "Slovenian Sexual Health and Infectious Disease Awareness Community",
+      "summary": "The Slovenian Sexual Health and Infectious Disease Awareness Community comprises various organizatio...",
+      "rating": 9.0
+    },
+    {
+      "id": "d13a2974-927c-457c-947d-a6609fe7e8bc",
+      "name": "Peptic Ulcer Disease Community",
+      "summary": "The Peptic Ulcer Disease Community encompasses various medical conditions, treatments, and lifestyle...",
+      "rating": 8.0
+    },
+    {
+      "id": "757db397-0c5c-475b-97bb-6c466874fd48",
+      "name": "Cardiovascular Health Community in Friuli-Venezia Giulia",
+      "summary": "The Cardiovascular Health Community in Friuli-Venezia Giulia encompasses healthcare institutions, as...",
+      "rating": 9.0
+    },
+    {
+      "id": "1f742738-a425-49fb-acbf-b7289c7611ea",
+      "name": "Rosacea Awareness and Management Community",
+      "summary": "The Rosacea Awareness and Management Community is a network of individuals, organizations, and resou...",
+      "rating": 8.0
+    },
+    {
+      "id": "0f15e1cc-335f-4ad4-9230-34493587b0ce",
+      "name": "Urinary Incontinence Treatment Community",
+      "summary": "The Urinary Incontinence Treatment Community encompasses various clinics and hospitals in Italy that...",
+      "rating": 7.5
+    },
+    {
+      "id": "9d8d7f1f-443a-4f5c-a417-9ac25f8e21ed",
+      "name": "Mental Health Disorders Community",
+      "summary": "The Mental Health Disorders Community encompasses various mental health conditions, including eating...",
+      "rating": 9.0
+    },
+    {
+      "id": "7b6c0f62-29ac-4280-ae72-92549fb4b18c",
+      "name": "Infertility Support and Resources Community",
+      "summary": "The Infertility Support and Resources Community encompasses various organizations, resources, and ex...",
+      "rating": 9.0
+    },
+    {
+      "id": "bc61e43b-a079-4a4b-8e4e-c0ced2f879ff",
+      "name": "Parkinson's Disease Support Community",
+      "summary": "The Parkinson's Disease Support Community is a network of organizations and resources dedicated to p...",
+      "rating": 9.0
+    },
+    {
+      "id": "e3fb08fa-b9a5-4d93-b48d-be63545cae26",
+      "name": "Chronic Respiratory Conditions Community",
+      "summary": "The Chronic Respiratory Conditions Community encompasses various entities focused on managing and su...",
+      "rating": 9.0
+    },
+    {
+      "id": "dce4d2ea-ca6c-4d49-91f8-c9469dce062e",
+      "name": "Slovenia Health and Vaccination Community",
+      "summary": "The Slovenia Health and Vaccination Community encompasses various health initiatives, vaccination pr...",
+      "rating": 9.0
+    },
+    {
+      "id": "5f82773c-7d24-40be-b45c-78eb7a628e71",
+      "name": "Symptom Assessment and Triage",
+      "summary": "Community for evaluating common symptoms like fever, pain, cough, and fatigue. Provides guidance on ...",
+      "rating": 9.5
+    },
+    {
+      "id": "243acca0-6f91-492e-ac37-3a9346132b14",
+      "name": "Emergency Recognition and Response",
+      "summary": "Community focused on recognizing medical emergencies including heart attack, stroke, severe allergic...",
+      "rating": 10.0
+    },
+    {
+      "id": "12c69b14-3137-4ab3-947f-654187b1f9ab",
+      "name": "Common Illness Home Treatment",
+      "summary": "Community covering self-care for minor illnesses including cold, flu, stomach upset, and minor infec...",
+      "rating": 8.5
+    },
+    {
+      "id": "96247912-6401-417f-b683-2a6c18ff09bb",
+      "name": "Medication Safety and Guidance",
+      "summary": "Community focused on safe medication usage, over-the-counter drug selection, proper dosing guideline...",
+      "rating": 9.0
+    },
+    {
+      "id": "2ee29d6d-899a-450b-8f5c-b47ae85cdc31",
+      "name": "Chronic Disease Self-Management",
+      "summary": "Community supporting daily management of chronic conditions like diabetes, hypertension, asthma, and...",
+      "rating": 8.8
+    },
+    {
+      "id": "a221f7cf-0073-4a76-b65f-2138d2c9e76c",
+      "name": "Mental Health and Wellness Support",
+      "summary": "Community addressing stress management, anxiety, depression recognition, sleep issues, and basic psy...",
+      "rating": 8.0
+    }
+  ]
+}

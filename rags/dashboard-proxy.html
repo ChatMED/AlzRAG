@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>R2R Dashboard with Custom RAG Agents</title>
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+    iframe { width: 100%; height: 100%; border: none; }
+  </style>
+  <script>
+    // Function to add custom prompts to the dropdown after the iframe loads
+    function addCustomPrompts() {
+      const iframe = document.getElementById('dashboard');
+      const iframeWindow = iframe.contentWindow;
+      const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+      
+      // Wait for the page to fully load
+      setTimeout(() => {
+        // Find all dropdowns in the iframe
+        const dropdowns = iframeDocument.querySelectorAll('select');
+        console.log('Found dropdowns:', dropdowns.length);
+        
+        // Check each dropdown
+        dropdowns.forEach((dropdown, index) => {
+          console.log(`Dropdown ${index}:`, dropdown);
+          
+          // Add custom options if this looks like the prompt dropdown
+          if (dropdown.options.length > 0 && dropdown.options[0].value.includes('rag')) {
+            console.log('Found prompt dropdown!');
+            
+            // Add custom options
+            const customPrompts = [
+              { value: "alzrag_research", text: "AlzRAG Research" },
+              { value: "alzrag_clinical", text: "AlzRAG Clinical" },
+              { value: "alzrag_patient", text: "AlzRAG Patient Education" },
+              { value: "alzrag_treatment", text: "AlzRAG Treatment" },
+              { value: "alzrag_synthesis", text: "AlzRAG Research Synthesis" }
+            ];
+            
+            customPrompts.forEach(prompt => {
+              const option = document.createElement('option');
+              option.value = prompt.value;
+              option.text = prompt.text;
+              dropdown.appendChild(option);
+            });
+            
+            console.log('Added custom RAG agents to dropdown');
+          }
+        });
+      }, 5000); // Wait 5 seconds for the dashboard to load
+    }
+  </script>
+</head>
+<body>
+  <iframe id="dashboard" src="http://localhost:7273" onload="addCustomPrompts()"></iframe>
+</body>
+</html>

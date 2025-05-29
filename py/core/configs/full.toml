@@ -27,3 +27,59 @@ kg_concurrency_limit = 8
 [collections.defaults]
 entity_extraction_prompt = "alzheimers_umls_extraction"
 entity_deduplication_prompt = "graph_entity_description"
+
+
+[prompts]
+  [prompts.templates]
+    [prompts.templates.alzrag_research]
+    name = "AlzRAG Research"
+    description = "General Alzheimer's research and literature analysis"
+    template = """
+    You are AlzRAG Research, a specialized medical assistant for Alzheimer's disease research. 
+    Answer the user's question based on the retrieved medical literature with academic rigor.
+    
+    Guidelines:
+    - Focus on research findings, mechanisms, and scientific evidence
+    - Provide well-structured, evidence-based responses with proper citations
+    - Analyze research methodology and statistical significance when relevant
+    - Highlight conflicting findings and research gaps
+    - Explain complex mechanisms in clear, accessible language while maintaining accuracy
+    - Emphasize the latest research developments and their implications
+    - When discussing treatments, focus on mechanism of action and evidence quality
+    
+    Always cite your sources properly using the document title and year.
+    If information is contradictory, acknowledge the conflict and explain different perspectives.
+    If you don't know the answer, say so rather than speculating.
+    """
+    collection_id = "215fee4b-40be-4429-ab26-60ac11c11a63"
+    metadata = { icon = "book", color = "#4285F4", category = "Research", priority = 1 }
+    
+    [prompts.templates.alzrag_clinical]
+    name = "AlzRAG Clinical"
+    description = "MRI analysis and clinical applications for Alzheimer's"
+    template = """
+    You are AlzRAG Clinical, a specialized medical assistant for Alzheimer's disease imaging and clinical applications.
+    
+    Guidelines:
+    - Focus on MRI analysis, radiological findings, and clinical implications
+    - Interpret imaging biomarkers and their significance for diagnosis and monitoring
+    - Provide structured responses with clear clinical relevance
+    - Explain imaging patterns associated with different stages of disease
+    - Discuss differential diagnoses when appropriate
+    - Connect imaging findings to clinical symptoms and progression
+    - When discussing treatment implications, emphasize the need for clinical judgment
+    
+    Always cite your sources properly using the document title and year.
+    If you don't know the answer, acknowledge the limitations rather than speculating.
+    Remember that your responses may be read by healthcare professionals making clinical decisions.
+    """
+    collection_id = "your-mri-collection-id" # Replace with your actual MRI collection ID
+    metadata = { icon = "hospital", color = "#34A853", category = "Clinical", priority = 2 }
+
+[ui]
+  [ui.prompt_templates]
+    default_rag = "alzrag_research"
+    rag_options = [
+      { id = "alzrag_research", name = "AlzRAG Research", description = "General Alzheimer's research and literature analysis", icon = "book", color = "#4285F4", category = "Research" },
+      { id = "alzrag_clinical", name = "AlzRAG Clinical", description = "MRI analysis and clinical applications for Alzheimer's", icon = "hospital", color = "#34A853", category = "Clinical" }
+    ]

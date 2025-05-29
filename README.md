@@ -13,8 +13,95 @@ AlzRAG is a specialized Retrieval-Augmented Generation (RAG) system designed spe
 - **Multi-Modal Support**: Process and analyze text, images (MRIs, PET scans), and structured clinical data
 - **Interactive Visualization**: Graph-based exploration of research connections and treatment pathways
 
-## Getting Started
+## API Usage Examples
 
+### Basic Health Query
+
+Query the system for general medical advice:
+
+```bash
+curl -X POST "http://jovana.openbrain.io/v3/retrieval/agent" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": {"role": "user", "content": "I have a fever of 102°F and headache. What should I do?"}, 
+    "search_settings": {"use_semantic_search": true}
+  }'
+```
+
+**Response Example:**
+```json
+{
+  "results": {
+    "messages": [{
+      "role": "assistant",
+      "content": "I'm not a doctor, but here are some general steps you can take if you have a fever and headache:\n\n1. **Stay Hydrated:** Drink plenty of fluids such as water, herbal teas, or clear broths to stay hydrated.\n\n2. **Rest:** Ensure you get plenty of rest to help your body fight off any infection.\n\n3. **Over-the-Counter Medication:** Consider taking over-the-counter medications like acetaminophen or ibuprofen to help reduce fever and alleviate headache pain. Follow the dosage instructions on the package.\n\n4. **Cool Compress:** Apply a cool, damp cloth to your forehead to help reduce fever.\n\n5. **Monitor Symptoms:** Keep an eye on your symptoms. If your fever persists for more than a couple of days, or if you experience severe symptoms, it's important to seek medical attention.\n\n6. **Consult a Healthcare Provider:** If you have any concerns or if your symptoms worsen, contact a healthcare provider for advice tailored to your specific situation.\n\nRemember, these are general suggestions, and it's always best to consult with a healthcare professional for medical advice."
+    }],
+    "conversation_id": "8ecb7a26-2783-4a94-b03e-584f536feae9"
+  }
+}
+```
+
+### EHR Patient Data Query
+
+Query specific patient information from Electronic Health Records:
+
+```bash
+curl -X POST "http://jovana.openbrain.io/v3/retrieval/agent" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": {"role": "user", "content": "patient P001"}, 
+    "search_settings": {
+      "filters": {"collection_id": {"$eq": "4086e0e7-4b95-45a8-9bf6-149a08b9f0ed"}}, 
+      "use_semantic_search": true
+    }, 
+    "selectedAgent": "ehr_agent"
+  }'
+```
+
+**Response Example:**
+```json
+{
+  "results": {
+    "messages": [{
+      "role": "assistant",
+      "content": "**Patient Demographics:**\n- Patient ID: P001\n- Age: Not specified\n- Gender: Not specified\n\n**Problems (Conditions):**\n- General Fatigue (2021)\n- Minor Injury (2019)\n- Flu Symptoms (2017)\n\n**Medications:**\n- Lisinopril: Dosage and frequency not specified\n- Ibuprofen: Dosage and frequency not specified\n- Metformin: Dosage and frequency not specified\n\n**Vital Signs:**\n- Systolic BP: Not specified\n- Diastolic BP: Not specified\n\n**Diagnostic Results:**\n- HbA1c: 7.8% (2022), 5.8% (2020)\n- Glucose: 8.3 mmol/L (2022), 5.5 mmol/L (2020)\n- Cholesterol: 6.0 mmol/L (2022), 5.4 mmol/L (2020)\n- CRP: 1.0 mg/L (2021)\n- WBC: 8.1 x 10^9/L (2021)\n\n**Plan of Care:**\n- Routine checkups with advice to maintain a healthy lifestyle\n- Sleep hygiene recommendations for fatigue\n- Wound care and tetanus status review for minor injuries\n\n**Note:**\n- No imaging ordered for any encounters\n- No data provided for Allergies and Intolerances, Immunizations, Procedures, Medical Devices, Social History, Functional Status"
+    }],
+    "conversation_id": "a4930a7a-cdfd-483a-93bf-640ab756278c"
+  }
+}
+```
+
+### Additional Query Examples
+
+**Medication Interaction Check:**
+```bash
+curl -X POST "http://jovana.openbrain.io/v3/retrieval/agent" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": {"role": "user", "content": "Can I take ibuprofen with my blood pressure medication?"}, 
+    "search_settings": {"use_semantic_search": true}
+  }'
+```
+
+**Emergency Situation Assessment:**
+```bash
+curl -X POST "http://jovana.openbrain.io/v3/retrieval/agent" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": {"role": "user", "content": "Someone is having chest pain and difficulty breathing. Should I call 911?"}, 
+    "search_settings": {"use_semantic_search": true}
+  }'
+```
+
+**Alzheimer's Research Query:**
+```bash
+curl -X POST "http://jovana.openbrain.io/v3/retrieval/agent" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": {"role": "user", "content": "What are the latest treatments for tau protein accumulation in Alzheimer's disease?"}, 
+    "search_settings": {"use_semantic_search": true}
+  }'
+```
 ### Prerequisites
 
 - Python 3.8+

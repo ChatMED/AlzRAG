@@ -1,0 +1,45 @@
+{
+  "rag_options": [
+    {
+      "id": "alzrag_research",
+      "name": "AlzRAG Research",
+      "description": "General Alzheimer's research and literature analysis",
+      "icon": "book",
+      "color": "#4285F4",
+      "category": "Research"
+    },
+    {
+      "id": "alzrag_clinical",
+      "name": "AlzRAG Clinical",
+      "description": "MRI analysis and clinical applications for Alzheimer's",
+      "icon": "hospital",
+      "color": "#34A853",
+      "category": "Clinical"
+    },
+    {
+      "id": "alzrag_patient",
+      "name": "AlzRAG Patient Education",
+      "description": "Patient-friendly explanations and resources for Alzheimer's",
+      "icon": "users",
+      "color": "#FBBC05",
+      "category": "Education"
+    },
+    {
+      "id": "alzrag_treatment",
+      "name": "AlzRAG Treatment",
+      "description": "Treatment options and clinical approaches for Alzheimer's",
+      "icon": "pill",
+      "color": "#EA4335",
+      "category": "Treatment"
+    },
+    {
+      "id": "alzrag_synthesis",
+      "name": "AlzRAG Research Synthesis",
+      "description": "Analysis and synthesis of research trends in Alzheimer's",
+      "icon": "network",
+      "color": "#673AB7",
+      "category": "Research"
+    }
+  ],
+  "default_rag": "alzrag_research"
+}

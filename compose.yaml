@@ -121,10 +121,14 @@ services:
         condition: service_healthy
 
   r2r-dashboard:
-    image: ${R2R_DASHBOARD_IMAGE:-emrgntcmplxty/r2r-dashboard:latest}
+    build:
+      context: ./R2R-Application
     environment:
-      - NEXT_PUBLIC_R2R_DEPLOYMENT_URL=http://jovana.openbrain.io/v3
+      - NEXT_PUBLIC_R2R_DEPLOYMENT_URL=http://jovana.openbrain.io:7272/v3
+      - NEXT_PUBLIC_RAG_CONFIG_PATH=/app/config/rag_ui_config.json
     ports:
       - "7273:3000"
+    volumes:
+      - ./rags/rag_ui_config.json:/app/config/rag_ui_config.json
     depends_on:
       - r2r

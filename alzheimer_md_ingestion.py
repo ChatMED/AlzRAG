@@ -1379,6 +1379,805 @@ class MedicalKGPipeline:
         logger.info(f"Ingested {len(doc_ids)} MRI images from {directory}")
         self._save_state()  # Final save
         return doc_ids
+    async def ingest_csv_and_extract(self, csv_file_path: str, collection_id: str) -> Optional[str]:
+        """
+        Ingest a CSV file into the system and extract entities and relationships from it
+        using the existing medical extraction prompts.
+        
+        Args:
+            csv_file_path: Path to the CSV file to ingest
+            collection_id: Collection ID to associate with the document
+            
+        Returns:
+            str: Document ID of the ingested document or None if failed
+        """
+        try:
+            # Check if file exists
+            file_path = Path(csv_file_path)
+            if not file_path.exists():
+                logger.error(f"CSV file does not exist: {csv_file_path}")
+                return None
+                
+            # Read a sample of the CSV to get metadata
+            import pandas as pd
+            try:
+                # Read just a few rows to get column info
+                df_sample = pd.read_csv(file_path, nrows=5)
+                columns = df_sample.columns.tolist()
+                row_count = len(pd.read_csv(file_path))
+                logger.info(f"CSV has {row_count} rows and {len(columns)} columns: {columns}")
+                
+                # Create metadata from CSV structure
+                metadata = {
+                    "title": file_path.stem,
+                    "source": "csv_import",
+                    "file_type": "csv",
+                    "columns": columns,
+                    "row_count": row_count,
+                    "import_date": datetime.now().isoformat()
+                }
+            except Exception as e:
+                logger.warning(f"Error reading CSV metadata: {e}")
+                metadata = {
+                    "title": file_path.stem,
+                    "source": "csv_import",
+                    "file_type": "csv",
+                    "import_date": datetime.now().isoformat()
+                }
+            
+            # Create a unique ID for the document
+            doc_uuid = str(uuid.uuid4())
+            
+            # Ingest the file
+            response = await self.retry_api_call(
+                self.client.documents.create,
+                file_path=csv_file_path,
+                id=doc_uuid,
+                collection_ids=[collection_id],
+                metadata=metadata,
+                ingestion_mode="hi-res"  # Use hi-res mode for better chunking
+            )
+            
+            if isinstance(response, dict) and 'results' in response and 'document_id' in response['results']:
+                doc_id = response['results']['document_id']
+                logger.info(f"✓ Ingested CSV file {file_path.name} (ID: {doc_id})")
+                
+                # Add to our ingested documents set
+                self.state.setdefault("ingested_docs", set()).add(doc_id)
+                self._save_state()
+                
+                # Now extract entities from the document using existing MEDICAL_ENTITY_PROMPT
+                logger.info(f"Extracting entities from CSV document {doc_id}")
+                
+                try:
+                    await self.retry_api_call(
+                        self.client.documents.extract,
+                        id=doc_id,
+                        settings={
+                            "prompt_template": self.MEDICAL_ENTITY_PROMPT,
+                            "generation_config": {
+                                "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
+                                "api_base": "http://10.10.65.64:8083/v1/",
+                                "temperature": 0.3
+                            },
+                            "extraction_params": {
+                                "min_confidence": 0.7,
+                                "include_context": True
+                            }
+                        }
+                    )
+                    
+                    logger.info(f"✓ Successfully extracted entities from CSV document {doc_id}")
+                    
+                    # Add to our entity-extracted documents set
+                    self.state.setdefault("entity_extracted_docs", set()).add(doc_id)
+                    self._save_state()
+                    
+                    # Extract relationships using existing MEDICAL_RELATIONSHIP_PROMPT
+                    logger.info(f"Extracting relationships from CSV document {doc_id}")
+                    
+                    await self.retry_api_call(
+                        self.client.documents.extract,
+                        id=doc_id,
+                        settings={
+                            "prompt_template": self.MEDICAL_RELATIONSHIP_PROMPT,
+                            "generation_config": {
+                                "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
+                                "api_base": "http://10.10.65.64:8083/v1/",
+                                "temperature": 0.3
+                            },
+                            "extraction_params": {
+                                "min_confidence": 0.7
+                            }
+                        }
+                    )
+                    
+                    logger.info(f"✓ Successfully extracted relationships from CSV document {doc_id}")
+                    
+                    # Add to our relationship-extracted documents set
+                    self.state.setdefault("relationship_extracted_docs", set()).add(doc_id)
+                    self._save_state()
+                    
+                    return doc_id
+                    
+                except Exception as e:
+                    logger.error(f"✗ Error during entity/relationship extraction for CSV {doc_id}: {e}")
+                    return doc_id  # Return doc_id anyway since ingestion was successful
+                    
+            else:
+                logger.warning(f"✗ Unable to extract document ID for CSV file {file_path.name}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"✗ Failed to ingest CSV file {csv_file_path}: {e}")
+            return None
+
+    async def process_csv_directory(self, directory: str, collection_id: str, max_files: int = 10) -> List[str]:
+        """
+        Process all CSV files in a directory, ingesting them and extracting entities and relationships
+        
+        Args:
+            directory: Path to directory containing CSV files
+            collection_id: Collection ID to associate with the documents
+            max_files: Maximum number of files to process
+            
+        Returns:
+            List[str]: List of document IDs for ingested files
+        """
+        directory_path = Path(directory)
+        
+        # Validate directory exists
+        if not directory_path.exists():
+            logger.error(f"Directory does not exist: {directory}")
+            raise ValueError(f"Directory {directory} does not exist")
+        
+        # Find all CSV files in the directory
+        csv_files = list(directory_path.glob("*.csv"))
+        logger.info(f"Found {len(csv_files)} CSV files in {directory}")
+        
+        # Limit the number of files if specified
+        csv_files = csv_files[:max_files]
+        
+        # Process each file
+        doc_ids = []
+        for csv_file in csv_files:
+            try:
+                logger.info(f"Processing CSV file: {csv_file.name}")
+                
+                # Ingest file and extract entities/relationships
+                doc_id = await self.ingest_csv_and_extract(str(csv_file), collection_id)
+                
+                if doc_id:
+                    doc_ids.append(doc_id)
+                    logger.info(f"Successfully processed CSV file {csv_file.name}")
+                    
+                    # Save state periodically
+                    if len(doc_ids) % 5 == 0:
+                        self._save_state()
+                
+            except Exception as e:
+                logger.error(f"Error processing CSV file {csv_file.name}: {e}")
+                # Continue with the next file
+        
+        logger.info(f"Processed {len(doc_ids)} CSV files from {directory}")
+        self._save_state()  # Final save
+        
+        # After all files are processed, update the knowledge graph
+        if doc_ids:
+            logger.info("Updating knowledge graph with newly processed CSV files...")
+            await self.build_medical_kg(collection_id, doc_ids)
+        
+        return doc_ids
+    async def ingest_html_file(self, file_path: Path, collection_id: str, metadata_override: Dict[str, Any] = None) -> Optional[str]:
+        """
+        Ingest a single HTML file into the specified collection
+        
+        Args:
+            file_path: Path to the HTML file
+            collection_id: Collection ID to associate with the document
+            metadata_override: Optional metadata to override defaults
+            
+        Returns:
+            str: Document ID of the ingested document or None if failed
+        """
+        try:
+            # Check if file exists
+            if not file_path.exists():
+                logger.error(f"HTML file does not exist: {file_path}")
+                return None
+                
+            # Extract basic metadata from HTML content
+            metadata = self._extract_html_metadata(file_path)
+            
+            # Apply any metadata overrides
+            if metadata_override:
+                metadata.update(metadata_override)
+                
+            # Add file-specific metadata
+            metadata.update({
+                "source": "html_repository",
+                "file_type": "html",
+                "file_size": file_path.stat().st_size,
+                "ingestion_date": datetime.now().isoformat()
+            })
+            
+            # Create a unique ID for the document
+            doc_uuid = str(uuid.uuid4())
+            
+            # Ingest the HTML file
+            response = await self.retry_api_call(
+                self.client.documents.create,
+                file_path=str(file_path),
+                id=doc_uuid,
+                collection_ids=[collection_id],
+                metadata=metadata,
+                ingestion_mode="hi-res"  # Use hi-res mode for better HTML parsing
+            )
+            
+            if isinstance(response, dict) and 'results' in response and 'document_id' in response['results']:
+                doc_id = response['results']['document_id']
+                logger.info(f"✓ Ingested HTML file {file_path.name} (ID: {doc_id})")
+                
+                # Add to our ingested documents set
+                self.state.setdefault("ingested_docs", set()).add(doc_id)
+                self._save_state()
+                
+                return doc_id
+            else:
+                logger.warning(f"✗ Unable to extract document ID for HTML file {file_path.name}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"✗ Failed to ingest HTML file {file_path.name}: {e}")
+            return None
+
+    def _extract_html_metadata(self, file_path: Path) -> Dict[str, Any]:
+        """
+        Extract metadata from HTML file content
+        
+        Args:
+            file_path: Path to the HTML file
+            
+        Returns:
+            Dict containing extracted metadata
+        """
+        metadata = {
+            "title": file_path.stem,
+            "description": "",
+            "keywords": [],
+            "author": "",
+            "language": "en"
+        }
+        
+        try:
+            from bs4 import BeautifulSoup
+            
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read()
+                
+            soup = BeautifulSoup(content, 'html.parser')
+            
+            # Extract title
+            title_tag = soup.find('title')
+            if title_tag:
+                metadata["title"] = title_tag.get_text().strip()
+                
+            # Extract meta tags
+            meta_tags = soup.find_all('meta')
+            for meta in meta_tags:
+                name = meta.get('name', '').lower()
+                content_attr = meta.get('content', '')
+                
+                if name == 'description':
+                    metadata["description"] = content_attr
+                elif name == 'keywords':
+                    metadata["keywords"] = [k.strip() for k in content_attr.split(',')]
+                elif name == 'author':
+                    metadata["author"] = content_attr
+                elif name == 'language' or meta.get('http-equiv', '').lower() == 'content-language':
+                    metadata["language"] = content_attr
+                    
+            # Extract headings for additional context
+            headings = []
+            for i in range(1, 7):
+                h_tags = soup.find_all(f'h{i}')
+                headings.extend([h.get_text().strip() for h in h_tags])
+            metadata["headings"] = headings[:10]  # Limit to first 10 headings
+            
+            # Count content elements
+            paragraphs = len(soup.find_all('p'))
+            links = len(soup.find_all('a'))
+            images = len(soup.find_all('img'))
+            
+            metadata["content_stats"] = {
+                "paragraphs": paragraphs,
+                "links": links,
+                "images": images
+            }
+            
+        except Exception as e:
+            logger.warning(f"Error extracting HTML metadata from {file_path}: {e}")
+            # BeautifulSoup might not be available, use basic extraction
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    
+                # Basic title extraction
+                import re
+                title_match = re.search(r'<title[^>]*>(.*?)</title>', content, re.IGNORECASE | re.DOTALL)
+                if title_match:
+                    metadata["title"] = title_match.group(1).strip()
+                    
+            except Exception as e2:
+                logger.warning(f"Basic HTML metadata extraction also failed: {e2}")
+        
+        return metadata
+
+    async def ingest_html_repository(self, repository_path: str, collection_id: str, 
+                                    max_files: int = 100, recursive: bool = True,
+                                    file_patterns: List[str] = None) -> List[str]:
+        """
+        Ingest HTML files from a repository/directory
+        
+        Args:
+            repository_path: Path to the repository containing HTML files
+            collection_id: Collection ID to associate with the documents
+            max_files: Maximum number of files to process
+            recursive: Whether to search subdirectories recursively
+            file_patterns: List of file patterns to match (e.g., ['*.html', '*.htm'])
+            
+        Returns:
+            List[str]: List of document IDs for ingested files
+        """
+        repo_path = Path(repository_path)
+        
+        # Validate repository exists
+        if not repo_path.exists():
+            logger.error(f"Repository does not exist: {repository_path}")
+            raise ValueError(f"Repository {repository_path} does not exist")
+        
+        # Default file patterns
+        if file_patterns is None:
+            file_patterns = ['*.html', '*.htm']
+        
+        # Find HTML files
+        html_files = []
+        for pattern in file_patterns:
+            if recursive:
+                html_files.extend(list(repo_path.rglob(pattern)))
+            else:
+                html_files.extend(list(repo_path.glob(pattern)))
+        
+        logger.info(f"Found {len(html_files)} HTML files in {repository_path}")
+        
+        # Remove duplicates and sort
+        html_files = sorted(list(set(html_files)))
+        
+        # Limit the number of files if specified
+        html_files = html_files[:max_files]
+        
+        # Process each HTML file
+        doc_ids = []
+        failed_files = []
+        
+        for i, html_file in enumerate(html_files, 1):
+            try:
+                logger.info(f"Processing HTML file {i}/{len(html_files)}: {html_file.name}")
+                
+                # Create metadata with repository context
+                relative_path = html_file.relative_to(repo_path)
+                metadata = {
+                    "repository_path": str(repository_path),
+                    "relative_path": str(relative_path),
+                    "directory": str(relative_path.parent),
+                    "file_index": i,
+                    "total_files": len(html_files)
+                }
+                
+                # Ingest the HTML file
+                doc_id = await self.ingest_html_file(html_file, collection_id, metadata)
+                
+                if doc_id:
+                    doc_ids.append(doc_id)
+                    logger.info(f"✓ Successfully processed HTML file {html_file.name}")
+                else:
+                    failed_files.append(str(html_file))
+                    logger.warning(f"✗ Failed to process HTML file {html_file.name}")
+                
+                # Save state periodically
+                if len(doc_ids) % 10 == 0:
+                    self._save_state()
+                    
+                # Small delay to avoid overwhelming the server
+                await asyncio.sleep(1)
+                
+            except Exception as e:
+                logger.error(f"Error processing HTML file {html_file.name}: {e}")
+                failed_files.append(str(html_file))
+                # Continue with the next file
+        
+        logger.info(f"Processed {len(doc_ids)} HTML files successfully from {repository_path}")
+        if failed_files:
+            logger.warning(f"Failed to process {len(failed_files)} files: {failed_files}")
+        
+        self._save_state()  # Final save
+        return doc_ids
+
+    async def ingest_pdf_file(self, file_path: Path, collection_id: str, metadata_override: Dict[str, Any] = None) -> Optional[str]:
+        """
+        Ingest a single PDF file into the specified collection
+        
+        Args:
+            file_path: Path to the PDF file
+            collection_id: Collection ID to associate with the document
+            metadata_override: Optional metadata to override defaults
+            
+        Returns:
+            str: Document ID of the ingested document or None if failed
+        """
+        try:
+            # Check if file exists
+            if not file_path.exists():
+                logger.error(f"PDF file does not exist: {file_path}")
+                return None
+                
+            # Extract basic metadata from PDF
+            metadata = self._extract_pdf_metadata(file_path)
+            
+            # Apply any metadata overrides
+            if metadata_override:
+                metadata.update(metadata_override)
+                
+            # Add file-specific metadata
+            metadata.update({
+                "source": "pdf_collection",
+                "file_type": "pdf",
+                "file_size": file_path.stat().st_size,
+                "ingestion_date": datetime.now().isoformat()
+            })
+            
+            # Create a unique ID for the document
+            doc_uuid = str(uuid.uuid4())
+            
+            # Ingest the PDF file
+            response = await self.retry_api_call(
+                self.client.documents.create,
+                file_path=str(file_path),
+                id=doc_uuid,
+                collection_ids=[collection_id],
+                metadata=metadata,
+                ingestion_mode="hi-res"  # Use hi-res mode for better PDF parsing
+            )
+            
+            if isinstance(response, dict) and 'results' in response and 'document_id' in response['results']:
+                doc_id = response['results']['document_id']
+                logger.info(f"✓ Ingested PDF file {file_path.name} (ID: {doc_id})")
+                
+                # Add to our ingested documents set
+                self.state.setdefault("ingested_docs", set()).add(doc_id)
+                self._save_state()
+                
+                return doc_id
+            else:
+                logger.warning(f"✗ Unable to extract document ID for PDF file {file_path.name}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"✗ Failed to ingest PDF file {file_path.name}: {e}")
+            return None
+
+    def _extract_pdf_metadata(self, file_path: Path) -> Dict[str, Any]:
+        """
+        Extract metadata from PDF file
+        
+        Args:
+            file_path: Path to the PDF file
+            
+        Returns:
+            Dict containing extracted metadata
+        """
+        metadata = {
+            "title": file_path.stem,
+            "author": "",
+            "subject": "",
+            "creator": "",
+            "producer": "",
+            "creation_date": "",
+            "modification_date": "",
+            "page_count": 0
+        }
+        
+        try:
+            import PyPDF2
+            
+            with open(file_path, 'rb') as f:
+                pdf_reader = PyPDF2.PdfReader(f)
+                
+                # Extract basic info
+                metadata["page_count"] = len(pdf_reader.pages)
+                
+                # Extract document info if available
+                if pdf_reader.metadata:
+                    doc_info = pdf_reader.metadata
+                    metadata["title"] = doc_info.get('/Title', file_path.stem) or file_path.stem
+                    metadata["author"] = doc_info.get('/Author', '') or ''
+                    metadata["subject"] = doc_info.get('/Subject', '') or ''
+                    metadata["creator"] = doc_info.get('/Creator', '') or ''
+                    metadata["producer"] = doc_info.get('/Producer', '') or ''
+                    
+                    # Handle dates
+                    creation_date = doc_info.get('/CreationDate', '')
+                    if creation_date:
+                        metadata["creation_date"] = str(creation_date)
+                        
+                    mod_date = doc_info.get('/ModDate', '')
+                    if mod_date:
+                        metadata["modification_date"] = str(mod_date)
+                
+                # Try to extract first page text for additional context
+                try:
+                    if len(pdf_reader.pages) > 0:
+                        first_page = pdf_reader.pages[0]
+                        first_page_text = first_page.extract_text()[:500]  # First 500 chars
+                        metadata["first_page_preview"] = first_page_text.strip()
+                except Exception as e:
+                    logger.debug(f"Could not extract first page text: {e}")
+                    
+        except ImportError:
+            logger.warning("PyPDF2 not available, using basic PDF metadata extraction")
+            # Fall back to file system metadata
+            stat = file_path.stat()
+            metadata["creation_date"] = datetime.fromtimestamp(stat.st_ctime).isoformat()
+            metadata["modification_date"] = datetime.fromtimestamp(stat.st_mtime).isoformat()
+            
+        except Exception as e:
+            logger.warning(f"Error extracting PDF metadata from {file_path}: {e}")
+        
+        return metadata
+
+    async def ingest_pdf_directory(self, directory_path: str, collection_id: str, 
+                                max_files: int = 50, recursive: bool = True) -> List[str]:
+        """
+        Ingest PDF files from a directory
+        
+        Args:
+            directory_path: Path to directory containing PDF files
+            collection_id: Collection ID to associate with the documents
+            max_files: Maximum number of files to process
+            recursive: Whether to search subdirectories recursively
+            
+        Returns:
+            List[str]: List of document IDs for ingested files
+        """
+        dir_path = Path(directory_path)
+        
+        # Validate directory exists
+        if not dir_path.exists():
+            logger.error(f"Directory does not exist: {directory_path}")
+            raise ValueError(f"Directory {directory_path} does not exist")
+        
+        # Find PDF files
+        if recursive:
+            pdf_files = list(dir_path.rglob("*.pdf"))
+        else:
+            pdf_files = list(dir_path.glob("*.pdf"))
+        
+        logger.info(f"Found {len(pdf_files)} PDF files in {directory_path}")
+        
+        # Sort files for consistent processing order
+        pdf_files = sorted(pdf_files)
+        
+        # Limit the number of files if specified
+        pdf_files = pdf_files[:max_files]
+        
+        # Process each PDF file
+        doc_ids = []
+        failed_files = []
+        
+        for i, pdf_file in enumerate(pdf_files, 1):
+            try:
+                logger.info(f"Processing PDF file {i}/{len(pdf_files)}: {pdf_file.name}")
+                
+                # Create metadata with directory context
+                relative_path = pdf_file.relative_to(dir_path)
+                metadata = {
+                    "directory_path": str(directory_path),
+                    "relative_path": str(relative_path),
+                    "subdirectory": str(relative_path.parent),
+                    "file_index": i,
+                    "total_files": len(pdf_files)
+                }
+                
+                # Ingest the PDF file
+                doc_id = await self.ingest_pdf_file(pdf_file, collection_id, metadata)
+                
+                if doc_id:
+                    doc_ids.append(doc_id)
+                    logger.info(f"✓ Successfully processed PDF file {pdf_file.name}")
+                else:
+                    failed_files.append(str(pdf_file))
+                    logger.warning(f"✗ Failed to process PDF file {pdf_file.name}")
+                
+                # Save state periodically
+                if len(doc_ids) % 10 == 0:
+                    self._save_state()
+                    
+                # Small delay to avoid overwhelming the server
+                await asyncio.sleep(2)  # Slightly longer delay for PDFs as they may be larger
+                
+            except Exception as e:
+                logger.error(f"Error processing PDF file {pdf_file.name}: {e}")
+                failed_files.append(str(pdf_file))
+                # Continue with the next file
+        
+        logger.info(f"Processed {len(doc_ids)} PDF files successfully from {directory_path}")
+        if failed_files:
+            logger.warning(f"Failed to process {len(failed_files)} files: {failed_files}")
+        
+        self._save_state()  # Final save
+        return doc_ids  
+    async def build_communities(self, collection_id: str, settings: Optional[Dict[str, Any]] = None) -> bool:
+        """
+        Build communities in the medical knowledge graph using the correct R2R GraphsSDK.build method
+        """
+        try:
+            logger.info(f"Starting community building for collection: {collection_id}")
+            
+            # Default settings for medical knowledge graphs
+            default_settings = {
+                "max_knowledge_triples": 200000,
+                "entity_summarization_degree": 10,
+                "community_detection_algorithm": "leiden",
+                "resolution": 1.0,
+                "min_community_size": 3,
+                "max_communities": 1000,
+                "enable_community_summaries": True,
+                "summary_max_length": 500
+            }
+            
+            # Merge with provided settings
+            if settings:
+                default_settings.update(settings)
+            
+            # Build communities using the correct GraphsSDK.build method
+            response = await self.retry_api_call(
+                self.client.graphs.build,  # Correct method name from GraphsSDK
+                collection_id=collection_id,
+                settings=default_settings,  # Pass settings as 'settings' parameter
+                run_with_orchestration=True
+            )
+            
+            logger.info(f"✓ Community building initiated: {response}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"✗ Failed to build communities: {e}")
+            return False
+
+    async def get_community_insights(self, collection_id: str) -> Dict[str, Any]:
+        """
+        Get detailed insights about communities using the correct GraphsSDK methods
+        """
+        try:
+            logger.info(f"Analyzing community insights for collection: {collection_id}")
+            
+            # Get all communities using the correct method
+            communities_response = await self.retry_api_call(
+                self.client.graphs.list_communities,  # Correct method from GraphsSDK
+                collection_id=collection_id,
+                limit=1000
+            )
+            
+            communities = communities_response.get('results', [])
+            
+            if not communities:
+                logger.warning("No communities found in the knowledge graph")
+                return {"community_count": 0}
+            
+            # Analyze community statistics
+            insights = {
+                "community_count": len(communities),
+                "communities": [],
+                "statistics": {
+                    "avg_rating": 0,
+                    "rating_distribution": {"high": 0, "medium": 0, "low": 0},
+                    "top_communities": [],
+                    "medical_themes": {}
+                }
+            }
+            
+            ratings = []
+            medical_themes = {}
+            
+            for community in communities:
+                community_info = {
+                    "id": community.get('id'),
+                    "name": community.get('name', 'Unnamed Community'),
+                    "summary": community.get('summary', ''),
+                    "rating": community.get('rating', 0),
+                    "rating_explanation": community.get('rating_explanation', ''),
+                    "findings": community.get('findings', [])
+                }
+                
+                insights['communities'].append(community_info)
+                ratings.append(community.get('rating', 0))
+                
+                # Analyze medical themes
+                text_content = (community.get('name', '') + ' ' + community.get('summary', '')).lower()
+                
+                themes = [
+                    'symptom', 'disease', 'treatment', 'medication', 'emergency',
+                    'pain', 'fever', 'respiratory', 'cardiac', 'diabetes',
+                    'mental health', 'pediatric', 'women', 'senior', 'chronic'
+                ]
+                
+                for theme in themes:
+                    if theme in text_content:
+                        medical_themes[theme] = medical_themes.get(theme, 0) + 1
+            
+            # Calculate statistics
+            if ratings:
+                insights['statistics']['avg_rating'] = sum(ratings) / len(ratings)
+                
+                for rating in ratings:
+                    if rating >= 8:
+                        insights['statistics']['rating_distribution']['high'] += 1
+                    elif rating >= 5:
+                        insights['statistics']['rating_distribution']['medium'] += 1
+                    else:
+                        insights['statistics']['rating_distribution']['low'] += 1
+                
+                top_communities = sorted(communities, key=lambda x: x.get('rating', 0), reverse=True)[:5]
+                insights['statistics']['top_communities'] = [
+                    {
+                        "name": c.get('name'),
+                        "rating": c.get('rating'),
+                        "summary": c.get('summary', '')[:200] + "..." if len(c.get('summary', '')) > 200 else c.get('summary', '')
+                    }
+                    for c in top_communities
+                ]
+            
+            insights['statistics']['medical_themes'] = dict(sorted(medical_themes.items(), key=lambda x: x[1], reverse=True))
+            
+            logger.info(f"✓ Generated insights for {len(communities)} communities")
+            return insights
+            
+        except Exception as e:
+            logger.error(f"✗ Failed to get community insights: {e}")
+            return {"error": str(e)}
+
+    async def create_custom_community(self, collection_id: str, name: str, summary: str, 
+                                            findings: List[str] = None, rating: float = 5.0, 
+                                            rating_explanation: str = "") -> Optional[str]:
+        """
+        Create custom community using the correct GraphsSDK.create_community method
+        """
+        try:
+            logger.info(f"Creating custom community '{name}' in collection {collection_id}")
+            
+            response = await self.retry_api_call(
+                self.client.graphs.create_community,  # Correct method from GraphsSDK
+                collection_id=collection_id,
+                name=name,
+                summary=summary,
+                findings=findings or [],
+                rating=max(1.0, min(10.0, rating)),  # Ensure rating is between 1-10
+                rating_explanation=rating_explanation
+            )
+            
+            community_id = response.get('results', {}).get('id')
+            
+            if community_id:
+                logger.info(f"✓ Created custom community '{name}' with ID: {community_id}")
+                return community_id
+            else:
+                logger.error(f"✗ Failed to extract community ID from response: {response}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"✗ Failed to create custom community '{name}': {e}")
+            return None
+
 
 async def main():
     # Initialize pipeline with robust error handling
@@ -1526,10 +2325,443 @@ async def mainMRI():
         # Optional: Create additional radiology-specific layer
         await pipeline.create_radiology_layer(mri_collection_id)
 
-if __name__ == "__main__":
+    
+
+async def mainCSV():
+    """
+    Main function to process CSV files, extract entities and relationships,
+    and build a medical knowledge graph.
+    """
+    # Initialize pipeline with robust error handling
+    pipeline = MedicalKGPipeline(
+        base_url="http://jovana.openbrain.io:7272",
+        max_retries=3,
+        retry_delay=10
+    )
+    
+    # Create or get existing medical collection
+    collection_id = await pipeline.create_medical_collection(
+        name="Medical EHR Analysis",
+        description="Knowledge graph from medical EHR data"
+    )
+    
+    # Verify collection ID was created
+    if not collection_id:
+        logger.error("Failed to create collection")
+        return
+    
+    # Define path to CSV files
+    csv_dir = os.path.expanduser("/home/jovana/R2R/R2R/medical_csv_data")  # Update this to your CSV directory path
+    
+    # Process a single CSV file
+    single_csv_path = os.path.join(csv_dir, "patient_data.csv")  # Update this to your specific CSV file
+    # if os.path.exists(single_csv_path):
+    #     logger.info(f"Processing single CSV file: {single_csv_path}")
+    #     single_doc_id = await pipeline.ingest_csv_and_extract(
+    #         single_csv_path,
+    #         collection_id
+    #     )
+    #     if single_doc_id:
+    #         logger.info(f"Successfully processed single CSV file (ID: {single_doc_id})")
+    
+    # # Process a directory of CSV files
+    if os.path.exists(csv_dir):
+        logger.info(f"Processing directory of CSV files: {csv_dir}")
+        doc_ids = await pipeline.process_csv_directory(
+            csv_dir,
+            collection_id,
+            max_files=20  # Process up to 20 CSV files
+        )
+        logger.info(f"Processed {len(doc_ids)} CSV files from directory")
+    else:
+        logger.error(f"CSV directory does not exist: {csv_dir}")
+        doc_ids = []
+    
+    # Exit if no documents were processed
+    if not doc_ids and not (os.path.exists(single_csv_path) and single_doc_id):
+        logger.warning("No CSV files were processed.")
+        return
+    
+    # Build Knowledge Graph (if not already done by process_csv_directory)
+    if os.path.exists(single_csv_path) and single_doc_id and single_doc_id not in doc_ids:
+        doc_ids.append(single_doc_id)
+        build_kg_status = await pipeline.build_medical_kg(
+            collection_id=collection_id, 
+            doc_ids=doc_ids
+        )
+        logger.info(f"Knowledge graph build status: {build_kg_status}")
+    
+    # Create terminology layer
+    logger.info("Creating medical terminology layer in the knowledge graph...")
+    terminology_layer_status = await pipeline.create_medical_terminology_layer(collection_id)
+    logger.info(f"Medical terminology layer creation status: {terminology_layer_status}")
+    
+    # Create UMLS layer if UMLS API key is available
+    if pipeline.umls_api_key:
+        logger.info("Creating UMLS layer in the knowledge graph...")
+        umls_layer_status = await pipeline.create_umls_layer(collection_id)
+        logger.info(f"UMLS layer creation status: {umls_layer_status}")
+    
+    logger.info("CSV processing pipeline completed successfully")
+
+async def mainHTML():
+    """
+    Main function to process HTML files from a repository
+    """
+    # Initialize pipeline
+    pipeline = MedicalKGPipeline(
+        base_url="http://jovana.openbrain.io:7272",
+        max_retries=3,
+        retry_delay=10
+    )
+    
+    # Create or get existing collection
+    collection_id = await pipeline.create_medical_collection(
+        name="HTML Insieme",
+        description="Knowledge graph from HTML documentation and web content"
+    )
+    
+    if not collection_id:
+        logger.error("Failed to create collection")
+        return
+    
+    # Set the HTML repository path
+    html_repo_path = "/home/jovana/HomeDoctor/ijs-home-doctor/llm-backend/data/insieme_2024-12-03"  # Update this path
+    
+    # Ingest HTML files
+    doc_ids = await pipeline.ingest_html_repository(
+        html_repo_path,
+        collection_id,
+        max_files=200,
+        recursive=True,
+        file_patterns=['*.html', '*.htm']
+    )
+    
+    if not doc_ids:
+        logger.warning("No HTML files were ingested.")
+        return
+    
+    logger.info(f"Total HTML documents ingested: {len(doc_ids)}")
+    
+    # Extract entities and relationships using existing methods
+    entity_extracted_doc_ids = await pipeline.extract_entities_batch(
+        doc_ids, 
+        batch_size=5,
+        cooldown=60
+    )
+    logger.info(f"Entities extracted from {len(entity_extracted_doc_ids)} documents")
+    
+    relationship_extracted_doc_ids = await pipeline.extract_relationships_batch(
+        doc_ids,
+        batch_size=5,
+        cooldown=60
+    )
+    logger.info(f"Relationships extracted from {len(relationship_extracted_doc_ids)} documents")
+    
+    # Build Knowledge Graph
+    build_status = await pipeline.build_medical_kg(
+        collection_id=collection_id,
+        doc_ids=doc_ids
+    )
+    logger.info(f"Knowledge graph build status: {build_status}")
+    
+    # Create terminology layer
+    if build_status:
+        terminology_status = await pipeline.create_medical_terminology_layer(collection_id)
+        logger.info(f"Terminology layer creation status: {terminology_status}")
+
+async def mainPDF():
+    """
+    Main function to process PDF files from a directory
+    """
+    # Initialize pipeline
+    pipeline = MedicalKGPipeline(
+        base_url="http://jovana.openbrain.io:7272",
+        max_retries=3,
+        retry_delay=10
+    )
+    
+    # Create or get existing collection
+    collection_id = await pipeline.create_medical_collection(
+        name="PDF Manuals",
+        description="Knowledge graph from PDF documents and research papers"
+    )
+    
+    if not collection_id:
+        logger.error("Failed to create collection")
+        return
+    
+    # Set the PDF directory path
+    pdf_dir_path = "/home/jovana/HomeDoctor/ijs-home-doctor/llm-backend/data/manuals_2024-12-03"  # Update this path
+    
+    # Ingest PDF files
+    doc_ids = await pipeline.ingest_pdf_directory(
+        pdf_dir_path,
+        collection_id,
+        max_files=100,
+        recursive=True
+    )
+    
+    if not doc_ids:
+        logger.warning("No PDF files were ingested.")
+        return
+    
+    logger.info(f"Total PDF documents ingested: {len(doc_ids)}")
+    
+    # Extract entities and relationships using existing methods
+    entity_extracted_doc_ids = await pipeline.extract_entities_batch(
+        doc_ids, 
+        batch_size=3,
+        cooldown=90  # Smaller batches for PDFs
+    )
+    logger.info(f"Entities extracted from {len(entity_extracted_doc_ids)} documents")
+    
+    relationship_extracted_doc_ids = await pipeline.extract_relationships_batch(
+        doc_ids,
+        batch_size=3,
+        cooldown=90  # Smaller batches for PDFs
+    )
+    logger.info(f"Relationships extracted from {len(relationship_extracted_doc_ids)} documents")
+    
+    # Build Knowledge Graph
+    build_status = await pipeline.build_medical_kg(
+        collection_id=collection_id,
+        doc_ids=doc_ids
+    )
+    logger.info(f"Knowledge graph build status: {build_status}")
+    
+    # Create terminology layer
+    if build_status:
+        terminology_status = await pipeline.create_medical_terminology_layer(collection_id)
+        logger.info(f"Terminology layer creation status: {terminology_status}")
+
+
+async def main_home_doctor_communities_working():
+    """
+    Working main function for building home doctor communities
+    """
+    # Initialize pipeline
+    pipeline = MedicalKGPipeline(
+        base_url="http://jovana.openbrain.io:7272",
+        max_retries=3,
+        retry_delay=10
+    )
+    
+    # Use your existing collection ID
+    collection_id = "b96ef682-d1ae-42b7-9764-bc6438eb76eb"  # Your collection from the log
+    
+    logger.info(f"Building home doctor communities for collection: {collection_id}")
+    
+    # Step 1: Build automatic communities using the correct method
+    try:
+        logger.info("Starting automatic community building...")
+        response = await pipeline.retry_api_call(
+            pipeline.client.graphs.build,  # Correct method name
+            collection_id=collection_id,
+            settings={  # Settings parameter structure
+                "max_knowledge_triples": 100000,
+                "resolution": 1.2,
+                "min_community_size": 3,
+                "max_communities": 50,
+                "enable_community_summaries": True,
+                "summary_max_length": 600
+            },
+            run_with_orchestration=True
+        )
+        logger.info(f"✓ Community building initiated: {response}")
+        community_build_success = True
+    except Exception as e:
+        logger.error(f"✗ Failed to build communities: {e}")
+        community_build_success = False
+    
+    # Step 2: Wait for automatic community building
+    if community_build_success:
+        logger.info("Waiting for automatic community building to complete...")
+        await asyncio.sleep(90)  # Wait longer for processing
+    
+    # Step 3: Check if communities were created
+    try:
+        communities_check = await pipeline.retry_api_call(
+            pipeline.client.graphs.list_communities,
+            collection_id=collection_id,
+            limit=10
+        )
+        existing_communities = communities_check.get('results', [])
+        logger.info(f"Found {len(existing_communities)} existing communities after build")
+    except Exception as e:
+        logger.warning(f"Could not check existing communities: {e}")
+        existing_communities = []
+    
+    # Step 4: Create essential home doctor communities
+    home_doctor_communities = [
+        {
+            "name": "Symptom Assessment and Triage",
+            "summary": "Community for evaluating common symptoms like fever, pain, cough, and fatigue. Provides guidance on symptom severity assessment and helps determine when to seek medical care versus home treatment.",
+            "findings": [
+                "Fever management protocols for different age groups",
+                "Pain assessment and red flag symptoms identification",
+                "Respiratory symptom evaluation and warning signs",
+                "Decision trees for self-care versus medical consultation"
+            ],
+            "rating": 9.5,
+            "rating_explanation": "Critical for initial patient assessment and safety triage in home healthcare settings"
+        },
+        {
+            "name": "Emergency Recognition and Response",
+            "summary": "Community focused on recognizing medical emergencies including heart attack, stroke, severe allergic reactions, and choking. Provides immediate response guidance and criteria for calling emergency services.",
+            "findings": [
+                "Heart attack warning signs differ between men and women",
+                "FAST stroke recognition protocol saves critical time",
+                "Anaphylaxis progression and EpiPen administration",
+                "Basic CPR and choking response procedures"
+            ],
+            "rating": 10.0,
+            "rating_explanation": "Life-saving information that prevents delays in emergency care and can save lives"
+        },
+        {
+            "name": "Common Illness Home Treatment",
+            "summary": "Community covering self-care for minor illnesses including cold, flu, stomach upset, and minor infections. Focuses on evidence-based home remedies, rest protocols, and symptom monitoring.",
+            "findings": [
+                "Evidence-based home remedies show measurable benefits",
+                "Proper hydration and nutrition accelerate recovery",
+                "Symptom monitoring timelines help identify complications",
+                "Clear criteria for when minor symptoms require medical attention"
+            ],
+            "rating": 8.5,
+            "rating_explanation": "High-volume use case with well-established treatment protocols and clear safety guidelines"
+        },
+        {
+            "name": "Medication Safety and Guidance",
+            "summary": "Community focused on safe medication usage, over-the-counter drug selection, proper dosing guidelines, and drug interaction prevention. Essential for preventing medication errors in home settings.",
+            "findings": [
+                "Age-appropriate dosing prevents overdose and underdose",
+                "Common drug interactions can be life-threatening",
+                "Medication timing affects absorption and effectiveness",
+                "Proper storage prevents degradation and accidental ingestion"
+            ],
+            "rating": 9.0,
+            "rating_explanation": "Critical safety information that prevents adverse drug events and medication errors"
+        },
+        {
+            "name": "Chronic Disease Self-Management",
+            "summary": "Community supporting daily management of chronic conditions like diabetes, hypertension, asthma, and heart disease. Includes monitoring protocols, medication adherence, and lifestyle modifications.",
+            "findings": [
+                "Regular monitoring prevents acute complications",
+                "Medication adherence significantly improves outcomes",
+                "Lifestyle modifications can reduce medication needs",
+                "Early recognition of warning signs prevents hospitalizations"
+            ],
+            "rating": 8.8,
+            "rating_explanation": "Essential for preventing complications and maintaining quality of life in chronic conditions"
+        },
+        {
+            "name": "Mental Health and Wellness Support",
+            "summary": "Community addressing stress management, anxiety, depression recognition, sleep issues, and basic psychological support strategies suitable for home care environments.",
+            "findings": [
+                "Stress reduction techniques have measurable physiological benefits",
+                "Sleep hygiene improvements affect overall health outcomes",
+                "Early recognition of mental health symptoms enables timely intervention",
+                "Self-care strategies complement professional mental health treatment"
+            ],
+            "rating": 8.0,
+            "rating_explanation": "Increasingly important component of holistic healthcare with proven self-care strategies"
+        }
+    ]
+    
+    # Step 5: Create each community
+    created_communities = []
+    for i, community_data in enumerate(home_doctor_communities, 1):
+        try:
+            logger.info(f"Creating community {i}/{len(home_doctor_communities)}: {community_data['name']}")
+            
+            community_id = await pipeline.retry_api_call(
+                pipeline.client.graphs.create_community,
+                collection_id=collection_id,
+                name=community_data["name"],
+                summary=community_data["summary"],
+                findings=community_data.get("findings", []),
+                rating=community_data.get("rating", 5.0),
+                rating_explanation=community_data.get("rating_explanation", "")
+            )
+            
+            if community_id and community_id.get('results'):
+                created_id = community_id['results'].get('id')
+                created_communities.append({
+                    "id": created_id,
+                    "name": community_data["name"],
+                    "rating": community_data["rating"]
+                })
+                logger.info(f"✓ Created community: {community_data['name']} (ID: {created_id})")
+            else:
+                logger.error(f"✗ Failed to create community '{community_data['name']}': Invalid response")
+            
+            # Delay between creations to avoid overwhelming the server
+            await asyncio.sleep(5)
+            
+        except Exception as e:
+            logger.error(f"✗ Failed to create community '{community_data['name']}': {e}")
+    
+    # Step 6: Get final community insights
+    logger.info("Getting final community insights...")
+    await asyncio.sleep(15)  # Wait for communities to be processed
+    
+    try:
+        final_communities = await pipeline.retry_api_call(
+            pipeline.client.graphs.list_communities,
+            collection_id=collection_id,
+            limit=100
+        )
+        
+        total_communities = final_communities.get('results', [])
+        logger.info(f"✓ Total communities in graph: {len(total_communities)}")
+        logger.info(f"✓ Successfully created {len(created_communities)} custom home doctor communities")
+        
+        # Export results
+        export_data = {
+            "export_timestamp": datetime.now().isoformat(),
+            "collection_id": collection_id,
+            "created_communities": created_communities,
+            "total_communities_count": len(total_communities),
+            "community_build_success": community_build_success,
+            "all_communities": [
+                {
+                    "id": c.get('id'),
+                    "name": c.get('name'),
+                    "summary": c.get('summary', '')[:100] + "..." if len(c.get('summary', '')) > 100 else c.get('summary', ''),
+                    "rating": c.get('rating', 0)
+                }
+                for c in total_communities
+            ]
+        }
+        
+        try:
+            with open("home_doctor_communities_results.json", 'w', encoding='utf-8') as f:
+                json.dump(export_data, f, indent=2, ensure_ascii=False)
+            logger.info("✓ Exported community results to home_doctor_communities_results.json")
+        except Exception as e:
+            logger.error(f"✗ Failed to export results: {e}")
+            
+    except Exception as e:
+        logger.error(f"✗ Failed to get final insights: {e}")
+    
+    logger.info("Home doctor community building completed!")
+    
+    # Summary
+    logger.info("\n" + "="*60)
+    logger.info("COMMUNITY BUILDING SUMMARY")
+    logger.info("="*60)
+    logger.info(f"Collection ID: {collection_id}")
+    logger.info(f"Automatic community build: {'SUCCESS' if community_build_success else 'FAILED'}")
+    logger.info(f"Custom communities created: {len(created_communities)}")
+    for community in created_communities:
+        logger.info(f"  - {community['name']} (Rating: {community['rating']})")
+    logger.info("="*60)
+
+if __name__ ==   "__main__":
     # Load environment variables
     from dotenv import load_dotenv
     load_dotenv()
     
     # Run the pipeline
-    asyncio.run(mainMRI())
+    # asyncio.run(mainPDF())
+    asyncio.run(main_home_doctor_communities_working())
